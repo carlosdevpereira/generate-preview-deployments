@@ -1,6 +1,6 @@
-name: Preview Deployments
+name: Generate Preview Deployments
 author: carlosdevpereira
-description: A monorepo-focused Github Action to generate preview environments for your pull requests (hosted on Cloudflare Pages).
+description: A Github Action to generate preview environments for pull requests (hosted on Cloudflare Pages).
 branding:
   color: white
   icon: upload-cloud
