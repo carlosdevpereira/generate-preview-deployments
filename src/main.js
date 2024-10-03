@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as FormData from "form-data";
+import * as httpClient from "@actions/http-client";
 
 async function run() {
   try {
@@ -26,23 +27,18 @@ async function run() {
     for (const { label, project } of projectMapping) {
       if (!labels.some((l) => l.name === label)) continue;
 
-      const formData = new FormData();
-      formData.append("branch", github.context.payload.pull_request.head.ref);
-
       let url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/pages/projects/${project}/deployments`;
 
-      let options = {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type":
-            "multipart/form-data; boundary=---011000010111000001101001",
-          Authorization: `Bearer ${API_TOKEN}`,
-        },
-      };
+      const form = new FormData();
+      form.append("branch", github.context.payload.pull_request.head.ref);
 
-      const response = await fetch(url, options)
-      const result = await response.json();
+      const headers = form.getHeaders();
+      headers.Authorization = `Bearer ${API_TOKEN}`;
+
+      const http = new httpClient.HttpClient();
+      const response = await http.post(url, form, headers);
+      const result = await response.readBody();
+
       console.log("Cloudflare Response: ", result);
     }
   } catch (error) {
