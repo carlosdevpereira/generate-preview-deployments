@@ -1,0 +1,26 @@
+{
+  "name": "generate-preview-deployments",
+  "version": "1.0.0",
+  "main": "./index.js",
+  "license": "MIT",
+  "author": "carlosdevpereira",
+  "type": "module",
+  "private": true,
+  "description": "A monorepo-focused Github Action to generate preview environments for your pull requests (hosted on Cloudflare Pages).",
+  "homepage": "https://github.com/carlosdevpereira/generate-preview-deployments#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlosdevpereira/generate-preview-deployments.git"
+  },
+  "scripts": {
+    "build": "ncc build ./src/main.js -o dist --minify --license licenses.txt"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.0",
+    "@actions/github": "^6.0.0",
+    "@actions/http-client": "^2.2.3"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.2"
+  }
+}

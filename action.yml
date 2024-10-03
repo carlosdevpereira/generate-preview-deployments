@@ -1,0 +1,24 @@
+name: Preview Deployments
+author: carlosdevpereira
+description: A monorepo-focused Github Action to generate preview environments for your pull requests (hosted on Cloudflare Pages).
+branding:
+  color: white
+  icon: upload-cloud
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
+
+inputs:
+  github-token:
+    description: "The github token that will be used to comment the results on available pull requests."
+    required: true
+  cloudflare-api-token:
+    description: "The API Token that will be used to upload the coverage report to Cloudflare."
+    required: true
+  cloudflare-account-id:
+    description: "The Account ID that will be used to upload the coverage report to Cloudflare."
+    required: true
+  cloudflare-project-mappings:
+    description: "A mapping between pull request labels and Cloudflare project names."
+    required: true
