@@ -19,6 +19,6 @@ inputs:
   cloudflare-account-id:
     description: "The Account ID that will be used to upload the coverage report to Cloudflare."
     required: true
-  cloudflare-project-mappings:
+  project-label-mapping:
     description: "A mapping between pull request labels and Cloudflare project names."
     required: true
