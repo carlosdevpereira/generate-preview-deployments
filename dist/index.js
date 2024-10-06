@@ -29930,13 +29930,13 @@ class Cloudflare {
     async deploy(projectName, branch) {
         const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`;
         const headers = {
+            'Cache-Control': 'no-store, must-revalidate, max-age=0',
             'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001',
             Authorization: `Bearer ${this.apiToken}`
         };
         const body = `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`;
         const client = new http_client_1.HttpClient();
         const res = await client.postJson(url, body, headers);
-        console.log('raw response body: ', res);
         if (!res || !res.result)
             throw new Error('Missing Cloudflare response body');
         return res.result.result;
@@ -29955,11 +29955,11 @@ exports["default"] = Cloudflare;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.COMMENT_FOOTER = void 0;
 /** Default header part of the comment */
-const COMMENT_DEFAULT_HEAD = `## Deployed Preview Environments
+const COMMENT_DEFAULT_HEAD = `## ⚡ Preview deployments
 
-|      | Previews    |
-| :--- | :---        |`;
-exports.COMMENT_FOOTER = '<sub>Generated with ♡ using `generate-preview-deployments` action.</sub>';
+| Project      | Previews    |
+| :----------- | :---------- |`;
+exports.COMMENT_FOOTER = '<sub>With ♡ by [generate-preview-deployments](https://github.com/marketplace/actions/generate-preview-deployments).</sub>';
 class Comment {
     body;
     constructor(header = COMMENT_DEFAULT_HEAD) {
