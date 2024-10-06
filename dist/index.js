@@ -29907,6 +29907,88 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 2316:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const http_client_1 = __nccwpck_require__(4844);
+class Cloudflare {
+    accountID;
+    apiToken;
+    constructor(accountID, apiToken) {
+        this.accountID = accountID;
+        this.apiToken = apiToken;
+    }
+    /**
+     * Generate a Cloudflare preview deployment for the given project and branch.
+     * @param projectName The name of the Cloudflare Pages project.
+     * @param branch The branch to create a preview for.
+     * @returns The response from the Cloudflare API.
+     */
+    async deploy(projectName, branch) {
+        const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`;
+        const headers = {
+            'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001',
+            Authorization: `Bearer ${this.apiToken}`
+        };
+        const body = `---011000010111000001101001
+Content-Disposition: form-data; name="branch"
+
+${branch}
+---011000010111000001101001`;
+        const client = new http_client_1.HttpClient();
+        const response = await client.post(url, body, headers);
+        const responseBody = await response.readBody();
+        const parsedBody = JSON.parse(responseBody);
+        const result = parsedBody.result;
+        return result;
+    }
+}
+exports["default"] = Cloudflare;
+
+
+/***/ }),
+
+/***/ 2246:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.COMMENT_FOOTER = void 0;
+/** Default header part of the comment */
+const COMMENT_DEFAULT_HEAD = `## Deployed Preview Environments
+
+|      | Previews    |
+| :--- | :---        |`;
+exports.COMMENT_FOOTER = '<sub>Generated with ♡ using `generate-preview-deployments` action.</sub>';
+class Comment {
+    body;
+    constructor(header = COMMENT_DEFAULT_HEAD) {
+        this.body = header;
+        return this;
+    }
+    getBody() {
+        return `${this.body}
+${exports.COMMENT_FOOTER}`;
+    }
+    appendLine(line) {
+        this.body += `\n| ${line.name} | ${line.url} |`;
+        return this;
+    }
+    addTimestamp() {
+        const date = new Date();
+        this.body += `\n\n> Previews generated at ${date.toLocaleString()}`;
+        return this;
+    }
+}
+exports["default"] = Comment;
+
+
+/***/ }),
+
 /***/ 9407:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -29935,18 +30017,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
-const http_client_1 = __nccwpck_require__(4844);
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
+const cloudflare_1 = __importDefault(__nccwpck_require__(2316));
+const comment_1 = __importStar(__nccwpck_require__(2246));
 async function run() {
     try {
-        /** Read required inputs */
+        /** Retrieve required inputs */
+        const GITHUB_TOKEN = core.getInput('github-token');
+        if (!GITHUB_TOKEN)
+            throw new Error('Missing input github-token');
         const MAPPING = core.getInput('project-label-mapping');
         if (!MAPPING)
             throw new Error('Missing input project-label-mapping');
@@ -29961,22 +30046,50 @@ async function run() {
         if (!Array.isArray(projectMapping)) {
             throw new Error('Invalid input project-label-mapping');
         }
-        /** Trigger deployments */
-        const labels = github.context.payload.pull_request?.labels;
-        const branch = github.context.payload.pull_request?.head.ref;
-        console.log('Branch: ', branch, ' PR Labels: ', JSON.stringify(labels, null, 2));
-        for (const { label, project } of projectMapping) {
-            if (!labels.some((l) => l.name === label))
+        const pullRequest = github.context.payload.pull_request;
+        if (!pullRequest)
+            throw new Error('Missing pull request context');
+        const comment = new comment_1.default();
+        for (const map of projectMapping) {
+            const labels = pullRequest.labels;
+            if (!labels.some((l) => l.name === map.label))
                 continue;
-            let url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/pages/projects/${project}/deployments`;
-            const headers = {
-                'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001',
-                Authorization: `Bearer ${API_TOKEN}`
-            };
-            const http = new http_client_1.HttpClient();
-            const response = await http.post(url, `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`, headers);
-            const result = await response.readBody();
-            console.log('Cloudflare Response: ', result);
+            /** Trigger Cloudflare deployment */
+            const cloudflare = new cloudflare_1.default(ACCOUNT_ID, API_TOKEN);
+            const result = await cloudflare.deploy(map.project, pullRequest.head.ref);
+            if (!result) {
+                throw new Error(`Failed to deploy ${map.project} to Cloudflare Pages`);
+            }
+            /** Add deployment to PR comment draft */
+            comment.appendLine({ name: map.name || map.project, url: result.url });
+        }
+        /** Creates or updates existing comment */
+        const githubClient = github.getOctokit(GITHUB_TOKEN);
+        const comments = await githubClient.rest.issues.listComments({
+            ...github.context.repo,
+            issue_number: pullRequest.number
+        });
+        const commentBody = comment.addTimestamp().getBody();
+        let commentId = null;
+        for (const comment of comments.data) {
+            if (comment.body?.includes(comment_1.COMMENT_FOOTER)) {
+                commentId = comment.id;
+                break;
+            }
+        }
+        if (commentId) {
+            await githubClient.rest.issues.updateComment({
+                ...github.context.repo,
+                comment_id: commentId,
+                body: commentBody
+            });
+        }
+        else {
+            await githubClient.rest.issues.createComment({
+                ...github.context.repo,
+                issue_number: pullRequest.number,
+                body: commentBody
+            });
         }
     }
     catch (error) {
