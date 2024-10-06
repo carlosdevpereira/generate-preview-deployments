@@ -17,7 +17,7 @@ This Github Action uses the Cloudflare Pages Rest API to trigger preview deploym
 ### Using this Github Action in a workflow
 
 ```
-name: on-pull-request
+name: On pull request
 on:
   pull_request:
     types:
@@ -31,8 +31,12 @@ jobs:
   generate-previews:
     name: Generate preview environments
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     steps:
-        - uses: carlosdevpereira/generate-preview-deployments@v1
+        - uses: carlosdevpereira/generate-preview-deployments@v1.0.0
           with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
