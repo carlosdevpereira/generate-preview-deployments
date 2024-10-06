@@ -57,9 +57,13 @@ ${branch}
     const client = new HttpClient()
     const response = await client.post(url, body, headers)
     const responseBody = await response.readBody()
+    console.log("raw response body: ", responseBody)
 
-    const parsedBody = responseBody as unknown as CloudflareResponse
+    if (!responseBody) throw new Error('Missing Cloudflare response body')
+    const parsedBody = JSON.parse(JSON.stringify(responseBody)) as CloudflareResponse
+    console.log("parsed body: ", parsedBody)
     const result = parsedBody.result
+    console.log("result: ", result)
     return result
   }
 }

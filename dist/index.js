@@ -29941,8 +29941,13 @@ ${branch}
         const client = new http_client_1.HttpClient();
         const response = await client.post(url, body, headers);
         const responseBody = await response.readBody();
-        const parsedBody = responseBody;
+        console.log("raw response body: ", responseBody);
+        if (!responseBody)
+            throw new Error('Missing Cloudflare response body');
+        const parsedBody = JSON.parse(JSON.stringify(responseBody));
+        console.log("parsed body: ", parsedBody);
         const result = parsedBody.result;
+        console.log("result: ", result);
         return result;
     }
 }
