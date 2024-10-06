@@ -48,22 +48,13 @@ export default class Cloudflare {
       Authorization: `Bearer ${this.apiToken}`
     }
 
-    const body = `---011000010111000001101001
-Content-Disposition: form-data; name="branch"
-
-${branch}
----011000010111000001101001`
+    const body = `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`
 
     const client = new HttpClient()
-    const response = await client.post(url, body, headers)
-    const responseBody = await response.readBody()
-    console.log("raw response body: ", responseBody)
+    const res = await client.postJson<CloudflareResponse>(url, body, headers)
+    console.log('raw response body: ', res)
+    if (!res || !res.result) throw new Error('Missing Cloudflare response body')
 
-    if (!responseBody) throw new Error('Missing Cloudflare response body')
-    const parsedBody = JSON.parse(JSON.stringify(responseBody)) as CloudflareResponse
-    console.log("parsed body: ", parsedBody)
-    const result = parsedBody.result
-    console.log("result: ", result)
-    return result
+    return res.result.result
   }
 }
