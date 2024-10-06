@@ -29928,7 +29928,7 @@ class Cloudflare {
      * @returns The response from the Cloudflare API.
      */
     async deploy(projectName, branch) {
-        console.log('Starting Cloudflare deployment for project: ', projectName, ' and branch: ', branch);
+        console.log('Starting Cloudflare deployment for project: ', projectName, ' and branch: ', branch, '...');
         const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`;
         const headers = {
             'Cache-Control': 'no-store, must-revalidate, max-age=0',
@@ -30052,7 +30052,6 @@ async function run() {
         const comment = new comment_1.default();
         const labels = pullRequest.labels;
         const branch = pullRequest.head.ref;
-        console.log('PR: ', pullRequest, ' branch: ', branch);
         for (const map of projectMapping) {
             if (!labels.some((l) => l.name === map.label))
                 continue;
@@ -30066,6 +30065,7 @@ async function run() {
             comment.appendLine({ name: map.name || map.project, url: result.url });
         }
         /** Creates or updates existing comment */
+        console.log('Searching for existing PR comment...');
         const githubClient = github.getOctokit(GITHUB_TOKEN);
         const comments = await githubClient.rest.issues.listComments({
             ...github.context.repo,
@@ -30080,6 +30080,7 @@ async function run() {
             }
         }
         if (commentId) {
+            console.log('Updating existing PR comment with ID ' + commentId + '...');
             await githubClient.rest.issues.updateComment({
                 ...github.context.repo,
                 comment_id: commentId,
@@ -30087,6 +30088,7 @@ async function run() {
             });
         }
         else {
+            console.log('Creating new PR comment...');
             await githubClient.rest.issues.createComment({
                 ...github.context.repo,
                 issue_number: pullRequest.number,

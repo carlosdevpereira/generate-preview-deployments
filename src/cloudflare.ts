@@ -22,7 +22,8 @@ export default class Cloudflare {
       'Starting Cloudflare deployment for project: ',
       projectName,
       ' and branch: ',
-      branch
+      branch,
+      '...'
     )
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`
     const headers = {

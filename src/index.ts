@@ -29,7 +29,6 @@ export async function run(): Promise<void> {
     const comment = new Comment()
     const labels = pullRequest.labels
     const branch = pullRequest.head.ref
-    console.log('PR: ', pullRequest, ' branch: ', branch)
 
     for (const map of projectMapping) {
       if (!labels.some((l: { name: string }) => l.name === map.label)) continue
@@ -46,6 +45,7 @@ export async function run(): Promise<void> {
     }
 
     /** Creates or updates existing comment */
+    console.log('Searching for existing PR comment...')
     const githubClient = github.getOctokit(GITHUB_TOKEN)
     const comments = await githubClient.rest.issues.listComments({
       ...github.context.repo,
@@ -62,12 +62,14 @@ export async function run(): Promise<void> {
     }
 
     if (commentId) {
+      console.log('Updating existing PR comment with ID ' + commentId + '...')
       await githubClient.rest.issues.updateComment({
         ...github.context.repo,
         comment_id: commentId,
         body: commentBody
       })
     } else {
+      console.log('Creating new PR comment...')
       await githubClient.rest.issues.createComment({
         ...github.context.repo,
         issue_number: pullRequest.number,
