@@ -1,16 +1,9 @@
+import type { ProjectMap } from './types'
+
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import CloudflareClient from './cloudflare'
 import Comment, { COMMENT_FOOTER } from './comment'
-
-export interface ProjectMap {
-  /** Label in the PR that matches the a configured Cloudflare project */
-  label: string
-  /** Cloudflare Pages project name */
-  project: string
-  /** Name that will appear in the PR comment (if empty, the "project" value will be used instead) */
-  name: string
-}
 
 export async function run(): Promise<void> {
   try {

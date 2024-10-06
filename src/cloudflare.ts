@@ -1,29 +1,6 @@
-import { HttpClient } from '@actions/http-client'
+import type { CloudflareResponse } from './types'
 
-export interface CloudflareResponse {
-  success: boolean
-  errors: any[]
-  messages: any[]
-  result: {
-    id: string
-    short_id: string
-    project_id: string
-    project_name: string
-    environment: string
-    url: string
-    created_on: string
-    modified_on: string
-    deployment_trigger: {
-      type: string
-      metadata: {
-        branch: string
-        commit_hash: string
-        commit_message: string
-        commit_dirty: boolean
-      }
-    }
-  }
-}
+import { HttpClient } from '@actions/http-client'
 
 export default class Cloudflare {
   private readonly accountID: string
@@ -43,6 +20,7 @@ export default class Cloudflare {
   async deploy(projectName: string, branch: string) {
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`
     const headers = {
+      'Cache-Control': 'no-store, must-revalidate, max-age=0',
       'Content-Type':
         'multipart/form-data; boundary=---011000010111000001101001',
       Authorization: `Bearer ${this.apiToken}`
@@ -52,7 +30,6 @@ export default class Cloudflare {
 
     const client = new HttpClient()
     const res = await client.postJson<CloudflareResponse>(url, body, headers)
-    console.log('raw response body: ', res)
     if (!res || !res.result) throw new Error('Missing Cloudflare response body')
 
     return res.result.result

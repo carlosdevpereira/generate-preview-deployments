@@ -1,8 +1,8 @@
 /** Default header part of the comment */
-const COMMENT_DEFAULT_HEAD = `## Deployed Preview Environments
+const COMMENT_DEFAULT_HEAD = `## ⚡ Preview deployments
 
-|      | Previews    |
-| :--- | :---        |`
+| Project      | Previews    |
+| :----------- | :---------- |`
 
 interface Line {
   name: string
@@ -10,7 +10,7 @@ interface Line {
 }
 
 export const COMMENT_FOOTER =
-  '<sub>Generated with ♡ using `generate-preview-deployments` action.</sub>'
+  '<sub>With ♡ by [generate-preview-deployments](https://github.com/marketplace/actions/generate-preview-deployments).</sub>'
 
 export default class Comment {
   private body: string
