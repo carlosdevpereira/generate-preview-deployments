@@ -27,14 +27,16 @@ export async function run(): Promise<void> {
     if (!pullRequest) throw new Error('Missing pull request context')
 
     const comment = new Comment()
+    const labels = pullRequest.labels
+    const branch = pullRequest.head.ref
+    console.log('PR: ', pullRequest, ' branch: ', branch)
 
     for (const map of projectMapping) {
-      const labels = pullRequest.labels
       if (!labels.some((l: { name: string }) => l.name === map.label)) continue
 
       /** Trigger Cloudflare deployment */
       const cloudflare = new CloudflareClient(ACCOUNT_ID, API_TOKEN)
-      const result = await cloudflare.deploy(map.project, pullRequest.head.ref)
+      const result = await cloudflare.deploy(map.project, branch)
       if (!result) {
         throw new Error(`Failed to deploy ${map.project} to Cloudflare Pages`)
       }

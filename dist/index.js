@@ -29928,6 +29928,7 @@ class Cloudflare {
      * @returns The response from the Cloudflare API.
      */
     async deploy(projectName, branch) {
+        console.log('Starting Cloudflare deployment for project: ', projectName, ' and branch: ', branch);
         const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`;
         const headers = {
             'Cache-Control': 'no-store, must-revalidate, max-age=0',
@@ -29936,17 +29937,16 @@ class Cloudflare {
         };
         const body = `---011000010111000001101001
 Content-Disposition: form-data; name="branch"
+
 ${branch}
 ---011000010111000001101001`;
         const client = new http_client_1.HttpClient();
         const rawResponse = await client.post(url, body, headers);
         if (!rawResponse)
             throw new Error('Missing Cloudflare response body');
-        console.log('raw response: ', rawResponse);
         const responseBody = await rawResponse.readBody();
-        console.log('response body: ', responseBody);
         const response = JSON.parse(responseBody);
-        console.log('Cloudflare deployment successful: ', response);
+        console.log('Cloudflare deployment successful: ', response.result);
         return response.result;
     }
 }
@@ -30054,13 +30054,15 @@ async function run() {
         if (!pullRequest)
             throw new Error('Missing pull request context');
         const comment = new comment_1.default();
+        const labels = pullRequest.labels;
+        const branch = pullRequest.head.ref;
+        console.log('PR: ', pullRequest, ' branch: ', branch);
         for (const map of projectMapping) {
-            const labels = pullRequest.labels;
             if (!labels.some((l) => l.name === map.label))
                 continue;
             /** Trigger Cloudflare deployment */
             const cloudflare = new cloudflare_1.default(ACCOUNT_ID, API_TOKEN);
-            const result = await cloudflare.deploy(map.project, pullRequest.head.ref);
+            const result = await cloudflare.deploy(map.project, branch);
             if (!result) {
                 throw new Error(`Failed to deploy ${map.project} to Cloudflare Pages`);
             }
