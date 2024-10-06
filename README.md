@@ -37,6 +37,6 @@ jobs:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
             cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-            project-label-mapping: '[{ "label": "EXAMPLE-PR-LABEL", "project": "EXAMPLE-CLOUDFLARE-PROJECT-NAME" }]'
+            project-label-mapping: '[{ "label": "EXAMPLE-PR-LABEL", "project": "EXAMPLE-CLOUDFLARE-PROJECT-NAME", "name": "Project name" }]'
 
 ```
