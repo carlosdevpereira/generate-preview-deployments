@@ -33,10 +33,14 @@ ${branch}
 ---011000010111000001101001`
 
     const client = new HttpClient()
-    const res = await client.postJson<CloudflareResponse>(url, body, headers)
-    if (!res || !res.result) throw new Error('Missing Cloudflare response body')
-    console.log('Cloudflare deployment successful: ', res.result)
+    const rawResponse = await client.post(url, body, headers)
+    if (!rawResponse) throw new Error('Missing Cloudflare response body')
+    console.log('raw response: ', rawResponse)
+    const responseBody = await rawResponse.readBody()
+    console.log('response body: ', responseBody)
+    const response: { result: CloudflareResponse } = JSON.parse(responseBody)
+    console.log('Cloudflare deployment successful: ', response)
 
-    return res.result.result
+    return response.result.result
   }
 }
