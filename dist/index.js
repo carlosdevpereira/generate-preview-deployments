@@ -29941,7 +29941,7 @@ ${branch}
         const client = new http_client_1.HttpClient();
         const response = await client.post(url, body, headers);
         const responseBody = await response.readBody();
-        const parsedBody = JSON.parse(responseBody);
+        const parsedBody = responseBody;
         const result = parsedBody.result;
         return result;
     }

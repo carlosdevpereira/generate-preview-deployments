@@ -58,7 +58,7 @@ ${branch}
     const response = await client.post(url, body, headers)
     const responseBody = await response.readBody()
 
-    const parsedBody = JSON.parse(responseBody) as CloudflareResponse
+    const parsedBody = responseBody as unknown as CloudflareResponse
     const result = parsedBody.result
     return result
   }
