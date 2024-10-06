@@ -18,7 +18,12 @@ export default class Cloudflare {
    * @returns The response from the Cloudflare API.
    */
   async deploy(projectName: string, branch: string) {
-    console.log('Starting Cloudflare deployment for project: ', projectName, ' and branch: ', branch)
+    console.log(
+      'Starting Cloudflare deployment for project: ',
+      projectName,
+      ' and branch: ',
+      branch
+    )
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`
     const headers = {
       'Cache-Control': 'no-store, must-revalidate, max-age=0',
@@ -26,12 +31,7 @@ export default class Cloudflare {
         'multipart/form-data; boundary=---011000010111000001101001',
       Authorization: `Bearer ${this.apiToken}`
     }
-
-    const body = `---011000010111000001101001
-Content-Disposition: form-data; name="branch"
-
-${branch}
----011000010111000001101001`
+    const body = `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`
 
     const client = new HttpClient()
     const rawResponse = await client.post(url, body, headers)

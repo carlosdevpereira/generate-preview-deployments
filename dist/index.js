@@ -29935,11 +29935,7 @@ class Cloudflare {
             'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001',
             Authorization: `Bearer ${this.apiToken}`
         };
-        const body = `---011000010111000001101001
-Content-Disposition: form-data; name="branch"
-
-${branch}
----011000010111000001101001`;
+        const body = `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`;
         const client = new http_client_1.HttpClient();
         const rawResponse = await client.post(url, body, headers);
         if (!rawResponse)
