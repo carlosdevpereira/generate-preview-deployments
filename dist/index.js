@@ -29936,7 +29936,6 @@ class Cloudflare {
         };
         const body = `---011000010111000001101001
 Content-Disposition: form-data; name="branch"
-
 ${branch}
 ---011000010111000001101001`;
         const client = new http_client_1.HttpClient();
@@ -29948,7 +29947,7 @@ ${branch}
         console.log('response body: ', responseBody);
         const response = JSON.parse(responseBody);
         console.log('Cloudflare deployment successful: ', response);
-        return response.result.result;
+        return response.result;
     }
 }
 exports["default"] = Cloudflare;
