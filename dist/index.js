@@ -29928,7 +29928,6 @@ class Cloudflare {
      * @returns The response from the Cloudflare API.
      */
     async deploy(projectName, branch) {
-        console.log('Starting Cloudflare deployment for project: ', projectName, ' and branch: ', branch, '...');
         const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`;
         const body = `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`;
         const headers = {
@@ -29936,16 +29935,14 @@ class Cloudflare {
             'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001',
             Authorization: `Bearer ${this.apiToken}`
         };
-        console.log('Request body: ', body);
         const sendRequest = async () => {
             const client = new http_client_1.HttpClient();
             const rawResponse = await client.post(url, body, headers);
             if (!rawResponse)
                 throw new Error('Missing Cloudflare response body');
             const responseBody = await rawResponse.readBody();
-            console.log('Response body: ', responseBody, typeof responseBody);
             const response = JSON.parse(responseBody);
-            console.log('Deployment successful: ', response.result);
+            console.log('Deploy successful: ', response.result);
             return response.result;
         };
         let attempt = 0;
@@ -30009,6 +30006,77 @@ exports["default"] = Comment;
 
 /***/ }),
 
+/***/ 9420:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getConfig = getConfig;
+const core = __importStar(__nccwpck_require__(4708));
+const github = __importStar(__nccwpck_require__(3802));
+function getConfig() {
+    /** Retrieve required inputs */
+    const githubToken = core.getInput('github-token');
+    if (!githubToken)
+        throw new Error('Missing input github-token');
+    const labelMapping = core.getInput('project-label-mapping');
+    if (!labelMapping)
+        throw new Error('Missing input project-label-mapping');
+    const accountId = core.getInput('cloudflare-account-id');
+    if (!accountId)
+        throw new Error('Missing input cloudflare-account-id');
+    const cloudflareApiToken = core.getInput('cloudflare-api-token');
+    if (!cloudflareApiToken)
+        throw new Error('Missing input cloudflare-api-token');
+    /** Parse project mapping */
+    const parsedLabelMapping = JSON.parse(labelMapping);
+    if (!Array.isArray(parsedLabelMapping)) {
+        throw new Error('Invalid input project-label-mapping');
+    }
+    const pullRequest = github.context.payload.pull_request;
+    if (!pullRequest)
+        throw new Error('Missing pull request context');
+    return {
+        projectMap: parsedLabelMapping,
+        github: {
+            token: githubToken,
+            pullRequest
+        },
+        cloudflare: {
+            accountId,
+            cloudflareApiToken
+        }
+    };
+}
+exports["default"] = getConfig;
+
+
+/***/ }),
+
 /***/ 3300:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -30044,54 +30112,37 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const core = __importStar(__nccwpck_require__(4708));
 const github = __importStar(__nccwpck_require__(3802));
+const config_1 = __importDefault(__nccwpck_require__(9420));
 const cloudflare_1 = __importDefault(__nccwpck_require__(4985));
 const comment_1 = __importStar(__nccwpck_require__(5345));
 async function run() {
     try {
-        /** Retrieve required inputs */
-        const GITHUB_TOKEN = core.getInput('github-token');
-        if (!GITHUB_TOKEN)
-            throw new Error('Missing input github-token');
-        const MAPPING = core.getInput('project-label-mapping');
-        if (!MAPPING)
-            throw new Error('Missing input project-label-mapping');
-        const ACCOUNT_ID = core.getInput('cloudflare-account-id');
-        if (!ACCOUNT_ID)
-            throw new Error('Missing input cloudflare-account-id');
-        const API_TOKEN = core.getInput('cloudflare-api-token');
-        if (!API_TOKEN)
-            throw new Error('Missing input cloudflare-api-token');
-        /** Parse project mapping */
-        const projectMapping = JSON.parse(MAPPING);
-        if (!Array.isArray(projectMapping)) {
-            throw new Error('Invalid input project-label-mapping');
-        }
-        const pullRequest = github.context.payload.pull_request;
-        if (!pullRequest)
-            throw new Error('Missing pull request context');
+        console.log('Retrieving action config...');
+        const config = (0, config_1.default)();
         const comment = new comment_1.default();
-        const labels = pullRequest.labels;
-        const branch = pullRequest.head.ref;
-        for (const map of projectMapping) {
+        const labels = config.github.pullRequest.labels;
+        const branch = config.github.pullRequest.head.ref;
+        for (const map of config.projectMap) {
             if (!labels.some((l) => l.name === map.label))
                 continue;
-            /** Trigger Cloudflare deployment */
-            const cloudflare = new cloudflare_1.default(ACCOUNT_ID, API_TOKEN);
+            const cloudflare = new cloudflare_1.default(config.cloudflare.accountId, config.cloudflare.cloudflareApiToken);
+            console.log('Starting Cloudflare Deployment...');
+            console.log('- Project: ' + map.project);
+            console.log('- Branch: ' + branch);
             const result = await cloudflare.deploy(map.project, branch);
             if (!result) {
                 throw new Error(`Failed to deploy ${map.project} to Cloudflare Pages`);
             }
-            /** Add deployment to PR comment draft */
             comment.appendLine({ name: map.name || map.project, url: result.url });
         }
+        const commentBody = comment.addTimestamp().getBody();
         /** Creates or updates existing comment */
-        console.log('Searching for existing PR comment...');
-        const githubClient = github.getOctokit(GITHUB_TOKEN);
+        console.log('Searching for existing comment...');
+        const githubClient = github.getOctokit(config.github.token);
         const comments = await githubClient.rest.issues.listComments({
             ...github.context.repo,
-            issue_number: pullRequest.number
+            issue_number: config.github.pullRequest.number
         });
-        const commentBody = comment.addTimestamp().getBody();
         let commentId = null;
         for (const comment of comments.data) {
             if (comment.body?.includes(comment_1.COMMENT_FOOTER)) {
@@ -30111,7 +30162,7 @@ async function run() {
             console.log('Creating new PR comment...');
             await githubClient.rest.issues.createComment({
                 ...github.context.repo,
-                issue_number: pullRequest.number,
+                issue_number: config.github.pullRequest.number,
                 body: commentBody
             });
         }
