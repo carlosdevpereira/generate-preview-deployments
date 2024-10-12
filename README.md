@@ -4,7 +4,7 @@
 
 To ensure development branches are, up to a certain degree, reliable and/or stable, it's a usual practise to create independent "preview" environments to test changes introduced by a pull request.
 
-Cloudflare Pages serves well this purpose, offerig a very generous free plan, allowing to build preview apps and attach them to pull requests automatically. However, in a monorepo architecture, the current approach involves each package of the monorepo having it's own (massive) deployment comment and status check in the pull requests, resulting in a "comment flood" and making the review/manual testing process more confusing.
+Cloudflare Pages serves well this purpose, offering a very generous free plan, allowing to build preview apps and attach them to pull requests automatically. However, in a monorepo architecture, the current approach involves each package of the monorepo having it's own (massive) deployment comment and status check in the pull requests, resulting in a "comment flood" and making the review/manual testing process more confusing.
 
 ## How does it work?
 
