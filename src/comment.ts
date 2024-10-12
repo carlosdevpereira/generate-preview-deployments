@@ -1,5 +1,5 @@
 /** Default header part of the comment */
-const COMMENT_DEFAULT_HEAD = `## ⚡ Preview deployments
+export const COMMENT_DEFAULT_HEAD = `## ⚡ Preview deployments
 
 | Project      | Previews    |
 | :----------- | :---------- |`

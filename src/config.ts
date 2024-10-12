@@ -15,11 +15,33 @@ export function getConfig() {
   if (!cloudflareApiToken) throw new Error('Missing input cloudflare-api-token')
 
   /** Parse project mapping */
-  const parsedLabelMapping = JSON.parse(labelMapping) as ProjectMap[]
-  if (!Array.isArray(parsedLabelMapping)) {
+  let parsedLabelMapping
+  try {
+    parsedLabelMapping = JSON.parse(labelMapping) as ProjectMap[]
+
+    if (!Array.isArray(parsedLabelMapping)) {
+      throw new Error('Invalid input project-label-mapping')
+    }
+  } catch (e) {
     throw new Error('Invalid input project-label-mapping')
   }
 
+  /** Ensure project mapping has required properties */
+  for (let i = 0; i < parsedLabelMapping.length; i++) {
+    const projectMap = parsedLabelMapping[i]
+    if (!projectMap.label || !projectMap.project) {
+      if (!projectMap.label)
+        throw new Error(
+          `Invalid input project-label-mapping, missing label property at index ${i}`
+        )
+      if (!projectMap.project)
+        throw new Error(
+          `Invalid input project-label-mapping, missing project property at index ${i}`
+        )
+    }
+  }
+
+  /** Ensure pull request context */
   const pullRequest = github.context.payload.pull_request
   if (!pullRequest) throw new Error('Missing pull request context')
 

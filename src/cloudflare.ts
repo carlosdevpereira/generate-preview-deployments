@@ -7,6 +7,9 @@ export default class Cloudflare {
   private readonly apiToken: string
 
   constructor(accountID: string, apiToken: string) {
+    if (!accountID) throw new Error('Missing Cloudflare account ID')
+    if (!apiToken) throw new Error('Missing Cloudflare API token')
+
     this.accountID = accountID
     this.apiToken = apiToken
   }
@@ -18,6 +21,8 @@ export default class Cloudflare {
    * @returns The response from the Cloudflare API.
    */
   async deploy(projectName: string, branch: string) {
+    if (!projectName) throw new Error('Missing Cloudflare Pages project name')
+
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`
     const body = `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`
     const headers = {

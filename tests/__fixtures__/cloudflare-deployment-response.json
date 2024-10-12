@@ -1,0 +1,19 @@
+{
+  "id": "ID",
+  "short_id": "Short ID",
+  "project_id": "Project ID",
+  "project_name": "Project name",
+  "environment": "preview",
+  "url": "Preview URL",
+  "created_on": "2020-01-01T00:00:00Z",
+  "modified_on": "2020-01-01T00:00:00Z",
+  "deployment_trigger": {
+    "type": "ad_hoc",
+    "metadata": {
+      "branch": "Repository branch",
+      "commit_hash": "Commit hash",
+      "commit_message": "Commit message",
+      "commit_dirty": false
+    }
+  }
+}

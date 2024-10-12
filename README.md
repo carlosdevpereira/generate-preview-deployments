@@ -14,7 +14,7 @@ This Github Action uses the Cloudflare Pages Rest API to trigger preview deploym
 
 @todo
 
-### Using this Github Action in a workflow
+### Example using this Github Action
 
 ```
 name: On pull request
@@ -36,7 +36,7 @@ jobs:
       pull-requests: write
       issues: write
     steps:
-        - uses: carlosdevpereira/generate-preview-deployments@v1.0.0
+        - uses: carlosdevpereira/generate-preview-deployments@v1
           with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -44,3 +44,16 @@ jobs:
             project-label-mapping: '[{ "label": "EXAMPLE-PR-LABEL", "project": "EXAMPLE-CLOUDFLARE-PROJECT-NAME", "name": "Project name" }]'
 
 ```
+<br/>
+
+| Input                   | Description                           |
+| :---------------------- | :------------------------------------ |
+| `github-token`          | A Github access token, with permissions to write on pull requests and issues. <br/> - This token is used to create or update pull request comments in the repository running this Github action. <br/> - Can be the default `GITHUB_TOKEN`, or a personal access token from a Github user. |
+| `cloudflare-account-id` | The Account ID of a Cloudflare account with access to the Cloudflare Pages projects configured in the `project-label-mapping` input.
+| `cloudflare-api-token`  | A Cloudflare API token, generated in Cloudflare dashboard, with permissions to create deployments in the Cloudflare Pages projects configured in the `project-label-mapping` input.
+| `project-label-mapping` | A mapping between labels in your pull requests and projects in Cloudflare Pages. Whenever one of these labels appears in a pull request, a deployment will be triggered for the selected Cloudflare Pages project. | 
+
+## Notes
+Access tokens passed as inputs to this action are not stored, logged or sent to any untrustworthy third party (check the code yourself).
+  - `github-token` is only used to authenticate within Github octokit
+  - `cloudflare-account-id` and `cloudflare-api-token` are only used to trigger HTTP requests to Cloudflare API.

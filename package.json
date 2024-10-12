@@ -1,6 +1,6 @@
 {
   "name": "generate-preview-deployments",
-  "description": "A monorepo-focused Github Action to generate preview environments for your pull requests (hosted on Cloudflare Pages).",
+  "description": "A Github Action to generate preview environments for your pull requests (hosted on Cloudflare Pages).",
   "version": "1.0.0",
   "private": true,
   "main": "./dist/index.js",
@@ -43,36 +43,7 @@
     "prettier": "^3.3.3",
     "prettier-eslint": "^16.3.0",
     "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "verbose": true,
-    "clearMocks": true,
-    "testEnvironment": "node",
-    "moduleFileExtensions": [
-      "js",
-      "ts"
-    ],
-    "testMatch": [
-      "**/*.test.ts",
-      "**/*.spec.ts"
-    ],
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/dist/"
-    ],
-    "transform": {
-      "^.+\\.ts$": "ts-jest"
-    },
-    "coverageReporters": [
-      "json-summary",
-      "text",
-      "lcov"
-    ],
-    "collectCoverage": true,
-    "collectCoverageFrom": [
-      "./src/**"
-    ]
   }
 }

@@ -1,0 +1,14 @@
+{
+  "number": 1,
+  "labels": [
+    {
+      "name": "label1"
+    },
+    {
+      "name": "label2"
+    }
+  ],
+  "head": {
+    "ref": "branch1"
+  }
+}
