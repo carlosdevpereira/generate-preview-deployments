@@ -1,7 +1,7 @@
 # Preview Deployments
 
 [![Unit tests](https://github.com/carlosdevpereira/generate-preview-deployments/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/carlosdevpereira/generate-preview-deployments/actions/workflows/unit-tests.yml)
-![Coverage](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcarlosdevpereira-preview-deployments.pages.dev%2Fcoverage-percentage.json&query=%24.coverage&suffix=%25&logo=2fas&logoColor=aaa&label=Coverage&color=rgb(50%2C%20199%2C%2084))
+[![Coverage](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcarlosdevpereira-preview-deployments.pages.dev%2Fcoverage-percentage.json&query=%24.coverage&suffix=%25&logo=2fas&logoColor=aaa&label=Coverage&color=rgb(50%2C%20199%2C%2084))](https://carlosdevpereira-preview-deployments.pages.dev)
 
 ## Context
 
