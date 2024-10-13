@@ -22,6 +22,8 @@
     "build:watch": "npm run build -- --watch",
     "test": "npx jest",
     "test:ci": "npx jest --ci",
+    "test:ci:coverage": "npx jest --ci --coverage",
+    "test:update-coverage": "./.github/scripts/update-coverage-percentage.sh",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml"
   },
   "dependencies": {
