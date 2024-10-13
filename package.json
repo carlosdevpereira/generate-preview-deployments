@@ -23,7 +23,7 @@
     "test": "npx jest",
     "test:ci": "npx jest --ci",
     "test:ci:coverage": "npx jest --ci --coverage",
-    "test:update-coverage": "./.github/scripts/update-coverage-percentage.sh",
+    "test:update-coverage": "node ./.github/scripts/update-coverage-percentage.js",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml"
   },
   "dependencies": {
