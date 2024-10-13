@@ -9,3 +9,7 @@ export const getInput = jest.fn((name: string) => {
 
   throw new Error('Unknown input')
 })
+
+export const setFailed = jest.fn(error => {
+  console.error(error)
+})

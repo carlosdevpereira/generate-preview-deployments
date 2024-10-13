@@ -13,7 +13,7 @@
   "transform": {
     "^.+\\.ts$": "ts-jest"
   },
-  "coverageReporters": ["json-summary", "text", "lcov"],
+  "coverageReporters": ["json-summary", "text", "lcov", "html"],
   "collectCoverage": true,
   "collectCoverageFrom": ["./src/**"]
 }

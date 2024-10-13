@@ -21,6 +21,7 @@
     "build": "npx ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "build:watch": "npm run build -- --watch",
     "test": "npx jest",
+    "test:ci": "npx jest --ci",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml"
   },
   "dependencies": {

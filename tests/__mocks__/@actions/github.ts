@@ -5,3 +5,15 @@ export const context = {
     pull_request: pullRequestFixture
   }
 }
+
+export function getOctokit() {
+  return {
+    rest: {
+      issues: {
+        listComments: jest.fn(() => ({ data: [] })),
+        createComment: jest.fn(),
+        updateComment: jest.fn()
+      }
+    }
+  }
+}
