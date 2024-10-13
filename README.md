@@ -1,5 +1,7 @@
 # Preview Deployments
 
+[![Unit tests](https://github.com/carlosdevpereira/generate-preview-deployments/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/carlosdevpereira/generate-preview-deployments/actions/workflows/unit-tests.yml)
+
 ## Context
 
 To ensure development branches are, up to a certain degree, reliable and/or stable, it's a usual practise to create independent "preview" environments to test changes introduced by a pull request.
