@@ -33454,12 +33454,14 @@ class Cloudflare {
             throw new Error('Missing Cloudflare Pages project name');
         const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`;
         const headers = {
-            'Cache-Control': 'no-store, must-revalidate, max-age=0',
+            Expires: '0',
+            Pragma: 'no-cache',
+            'Cache-Control': 'no-cache',
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${this.apiToken}`
         };
         const sendRequest = async () => {
-            const response = await axios_1.default.postForm(url, { branch }, { headers });
+            const response = await axios_1.default.postForm(url + `?timestamp=${Date.now()}`, { branch }, { headers });
             if (!response)
                 throw new Error('Missing Cloudflare raw response');
             return response.data;
