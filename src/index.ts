@@ -9,7 +9,9 @@ export async function run(): Promise<void> {
     console.log('Retrieving action config...')
     const config = getConfig()
 
+    let deployCount = 0
     const comment = new Comment()
+
     const labels = config.github.pullRequest.labels
     const branch = config.github.pullRequest.head.ref
 
@@ -28,7 +30,13 @@ export async function run(): Promise<void> {
         throw new Error(`Failed to deploy ${map.project} to Cloudflare Pages`)
       }
 
+      deployCount += 1
       comment.appendLine({ name: map.name || map.project, url: result.url })
+    }
+
+    if (deployCount === 0) {
+      console.log('No projects deployed. Skipping...')
+      return
     }
 
     const commentBody = comment.addTimestamp().getBody()

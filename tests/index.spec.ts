@@ -46,6 +46,8 @@ jest.mock('@actions/github', () => ({
 }))
 
 import cloudflareDeploymentResponseFixture from '@tests/__fixtures__/cloudflare-deployment-response.json'
+import * as core from '@actions/core'
+import { getInput as getInputFnMock } from '@tests/__mocks__/@actions/core'
 import { COMMENT_FOOTER } from '@/comment'
 import { run } from '@/index'
 
@@ -105,6 +107,27 @@ describe('src/index.ts', () => {
         })
       )
       expect(githubMocks.updateComment).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('when there are no projects to deploy', () => {
+    beforeEach(() => {
+      jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+        if (name === 'project-label-mapping') return '[]'
+        return 'valid-input-value'
+      })
+    })
+
+    afterEach(() => {
+      jest.spyOn(core, 'getInput').mockImplementation(getInputFnMock)
+    })
+
+    it('does not deploy and does not create a comment', async () => {
+      await run()
+
+      expect(mockedClient.post).not.toHaveBeenCalled()
+      expect(githubMocks.createComment).not.toHaveBeenCalled()
+      expect(githubMocks.updateComment).not.toHaveBeenCalled()
     })
   })
 })
