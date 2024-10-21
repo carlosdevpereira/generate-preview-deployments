@@ -29945,18 +29945,19 @@ class Cloudflare {
             const client = new http_client_1.HttpClient();
             const rawResponse = await client.post(url, body, headers);
             if (!rawResponse)
-                throw new Error('Missing Cloudflare response body');
+                throw new Error('Missing Cloudflare raw response');
             const responseBody = await rawResponse.readBody();
-            const response = JSON.parse(responseBody);
-            console.log('Deploy successful: ', response.result);
-            return response.result;
+            if (!responseBody)
+                throw new Error('Missing Cloudflare response body');
+            return responseBody;
         };
         let attempt = 0;
         const maxAttempts = 3;
-        let result;
+        let cloudflareResponse;
         do {
             try {
-                result = await sendRequest();
+                cloudflareResponse = await sendRequest();
+                console.log('Cloudflare response: ', cloudflareResponse);
             }
             catch (error) {
                 console.log(`Deploy attempt ${attempt + 1}, failed: `, error);
@@ -29965,8 +29966,10 @@ class Cloudflare {
                 await new Promise(resolve => setTimeout(resolve, 2 ** attempt * 1000));
             }
             attempt++;
-        } while (attempt < maxAttempts && !result);
-        return result;
+        } while (attempt < maxAttempts && !cloudflareResponse);
+        const response = JSON.parse(cloudflareResponse || '{}');
+        console.log('Deploy successful: ', response);
+        return response.result;
     }
 }
 exports["default"] = Cloudflare;
