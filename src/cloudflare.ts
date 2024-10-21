@@ -35,28 +35,31 @@ export default class Cloudflare {
     const sendRequest = async () => {
       const client = new HttpClient()
       const rawResponse = await client.post(url, body, headers)
-      if (!rawResponse) throw new Error('Missing Cloudflare response body')
+      if (!rawResponse) throw new Error('Missing Cloudflare raw response')
       const responseBody = await rawResponse.readBody()
-      const response: CloudflareResponse = JSON.parse(responseBody)
-      console.log('Deploy successful: ', response.result)
+      if (!responseBody) throw new Error('Missing Cloudflare response body')
 
-      return response.result
+      return responseBody
     }
 
     let attempt = 0
     const maxAttempts = 3
-    let result: CloudflareResponse['result'] | undefined
+    let cloudflareResponse
     do {
       try {
-        result = await sendRequest()
+        cloudflareResponse = await sendRequest()
+        console.log('Cloudflare response: ', cloudflareResponse)
       } catch (error) {
         console.log(`Deploy attempt ${attempt + 1}, failed: `, error)
         if (attempt >= maxAttempts) throw error
         await new Promise(resolve => setTimeout(resolve, 2 ** attempt * 1000))
       }
       attempt++
-    } while (attempt < maxAttempts && !result)
+    } while (attempt < maxAttempts && !cloudflareResponse)
 
-    return result
+      const response: CloudflareResponse = JSON.parse(cloudflareResponse || '{}')
+      console.log('Deploy successful: ', response)
+
+    return response.result
   }
 }
