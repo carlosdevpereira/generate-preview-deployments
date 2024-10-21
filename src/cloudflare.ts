@@ -25,31 +25,39 @@ export default class Cloudflare {
 
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`
     const headers = {
-      Expires: '0',
-      Pragma: 'no-cache',
-      'Cache-Control': 'no-cache',
-      'Content-Type': 'multipart/form-data',
       Authorization: `Bearer ${this.apiToken}`
     }
 
     const sendRequest = async () => {
-      const response = await axios.postForm(
-        url + `?timestamp=${Date.now()}`,
-        { branch },
-        { headers }
-      )
-      if (!response) throw new Error('Missing Cloudflare raw response')
+      let result
+      try {
+        const createDeploymentResponse = await axios.postForm(
+          url,
+          { branch },
+          { headers }
+        )
 
-      return response.data
+        if (createDeploymentResponse) {
+          result = createDeploymentResponse.data.result
+        }
+      } catch (error) {
+        const getDeploymentResponse = await axios.get(url, { headers })
+        if (getDeploymentResponse && getDeploymentResponse.data.results) {
+          result = getDeploymentResponse.data.results[0]
+        }
+      }
+
+      if (!result) throw new Error('Missing Cloudflare deployment result')
+
+      return result
     }
 
     let attempt = 0
     const maxAttempts = 3
-    let response: CloudflareResponse | undefined
+    let response: CloudflareResponse['result'] | undefined
     do {
       try {
         response = await sendRequest()
-        console.log('Cloudflare response: ', response)
       } catch (error) {
         console.log(`Deploy attempt ${attempt + 1}, failed: `, error)
         if (attempt >= maxAttempts) throw error
@@ -58,8 +66,6 @@ export default class Cloudflare {
       attempt++
     } while (attempt < maxAttempts && !response)
 
-    console.log('Deploy successful: ', response)
-
-    return response?.result
+    return response
   }
 }
