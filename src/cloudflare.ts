@@ -1,6 +1,6 @@
 import type { CloudflareResponse } from './types'
 
-import { HttpClient } from '@actions/http-client'
+import axios from 'axios'
 
 export default class Cloudflare {
   private readonly accountID: string
@@ -24,42 +24,36 @@ export default class Cloudflare {
     if (!projectName) throw new Error('Missing Cloudflare Pages project name')
 
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`
-    const body = `-----011000010111000001101001\r\nContent-Disposition: form-data; name="branch"\r\n\r\n${branch}\r\n-----011000010111000001101001--\r\n\r\n`
     const headers = {
       'Cache-Control': 'no-store, must-revalidate, max-age=0',
-      'Content-Type':
-        'multipart/form-data; boundary=---011000010111000001101001',
+      'Content-Type': 'multipart/form-data',
       Authorization: `Bearer ${this.apiToken}`
     }
 
     const sendRequest = async () => {
-      const client = new HttpClient()
-      const rawResponse = await client.post(url, body, headers)
-      if (!rawResponse) throw new Error('Missing Cloudflare raw response')
-      const responseBody = await rawResponse.readBody()
-      if (!responseBody) throw new Error('Missing Cloudflare response body')
+      const response = await axios.postForm(url, { branch }, { headers })
+      if (!response) throw new Error('Missing Cloudflare raw response')
 
-      return responseBody
+      return response.data
     }
 
     let attempt = 0
     const maxAttempts = 3
-    let cloudflareResponse
+    let response: CloudflareResponse | undefined
     do {
       try {
-        cloudflareResponse = await sendRequest()
-        console.log('Cloudflare response: ', cloudflareResponse)
+        response = await sendRequest()
+        console.log('Cloudflare response: ', response)
       } catch (error) {
         console.log(`Deploy attempt ${attempt + 1}, failed: `, error)
         if (attempt >= maxAttempts) throw error
         await new Promise(resolve => setTimeout(resolve, 2 ** attempt * 1000))
       }
       attempt++
-    } while (attempt < maxAttempts && !cloudflareResponse)
+    } while (attempt < maxAttempts && !response)
 
-      const response: CloudflareResponse = JSON.parse(cloudflareResponse || '{}')
-      console.log('Deploy successful: ', response)
+    console.log('Deploy successful: ', response)
 
-    return response.result
+    return response?.result
   }
 }
