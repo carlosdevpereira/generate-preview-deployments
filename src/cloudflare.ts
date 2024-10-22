@@ -1,5 +1,5 @@
 import type { CloudflareResponse } from './types'
-
+import type { AxiosError } from 'axios'
 import axios from 'axios'
 
 export default class Cloudflare {
@@ -31,26 +31,16 @@ export default class Cloudflare {
     const sendRequest = async () => {
       let result
       try {
-        const createDeploymentResponse = await axios.postForm(
-          url,
-          { branch },
-          { headers }
-        )
-        console.log('post result: ', createDeploymentResponse.data)
-        if (createDeploymentResponse) {
-          result = createDeploymentResponse.data.result
-        }
+        const { data } = await axios.postForm(url, { branch }, { headers })
+        if (data) result = data.result
       } catch (error) {
-        console.log('error:', error)
-        const getDeploymentResponse = await axios.get(url, { headers })
-        console.log('get deployment response: ', getDeploymentResponse.data)
-        if (getDeploymentResponse && getDeploymentResponse.data.results) {
-          result = getDeploymentResponse.data.results[0]
+        if ((error as AxiosError).response?.status === 304) {
+          const { data } = await axios.get(url, { headers })
+          if (data && data.result) result = data.result[0]
         }
       }
 
       if (!result) throw new Error('Missing Cloudflare deployment result')
-
       return result
     }
 
