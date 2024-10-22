@@ -13,3 +13,11 @@ export const getInput = jest.fn((name: string) => {
 export const setFailed = jest.fn(error => {
   console.error(error)
 })
+
+export const info = jest.fn(message => {
+  console.log(message)
+})
+
+export const debug = jest.fn(message => {
+  console.log(message)
+})

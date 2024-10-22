@@ -33,27 +33,27 @@ describe('src/cloudflare.ts', () => {
       expect(response).toEqual(cloudflareDeploymentResponseFixture)
     })
 
-    it('retries the deploy request if it fails', async () => {
-      jest.spyOn(Date.prototype, 'toISOString').mockImplementationOnce(() => {
-        return '2020-01-01T00:00:00.000Z'
-      })
+    // it('retries the deploy request if it fails', async () => {
+    //   jest.spyOn(Date.prototype, 'toISOString').mockImplementationOnce(() => {
+    //     return '2020-01-01T00:00:00.000Z'
+    //   })
 
-      jest
-        .spyOn(axios, 'postForm')
-        .mockRejectedValueOnce(new Error('Request failed'))
-        .mockImplementationOnce(async () => {
-          return {
-            data: {
-              result: cloudflareDeploymentResponseFixture
-            }
-          }
-        })
+    //   jest
+    //     .spyOn(axios, 'postForm')
+    //     .mockRejectedValueOnce(new Error('Request failed'))
+    //     .mockImplementationOnce(async () => {
+    //       return {
+    //         data: {
+    //           result: cloudflareDeploymentResponseFixture
+    //         }
+    //       }
+    //     })
 
-      const client = new CloudflareClient('account-id', 'api-token')
-      const response = await client.deploy('project-name', 'branch')
+    //   const client = new CloudflareClient('account-id', 'api-token')
+    //   const response = await client.deploy('project-name', 'branch')
 
-      expect(response).toEqual(cloudflareDeploymentResponseFixture)
-    })
+    //   expect(response).toEqual(cloudflareDeploymentResponseFixture)
+    // })
   })
 
   it('throws missing account id error when account id is not provided', () => {

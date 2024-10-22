@@ -33427,10 +33427,34 @@ function wrappy (fn, cb) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(4708));
 const axios_1 = __importDefault(__nccwpck_require__(2759));
 class Cloudflare {
     accountID;
@@ -33452,47 +33476,37 @@ class Cloudflare {
     async deploy(projectName, branch) {
         if (!projectName)
             throw new Error('Missing Cloudflare Pages project name');
+        core.info(`Starting deployment of ${projectName} from branch ${branch}`);
         const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`;
         const headers = {
             Authorization: `Bearer ${this.apiToken}`
         };
-        const sendRequest = async () => {
-            let result;
-            try {
-                const response = await axios_1.default.postForm(url, { branch }, { headers });
-                if (response?.data)
-                    result = response?.data.result;
-            }
-            catch (error) {
-                console.log('error: ', error);
-                if (error.response?.status === 304) {
-                    const response = await axios_1.default.get(`${url}?env=preview`, { headers });
-                    if (response?.data && response?.data.result) {
-                        const branchDeployments = response?.data.result.filter((deployment) => deployment.deployment_trigger.metadata.branch === branch);
-                        result = branchDeployments[0];
-                    }
+        let result;
+        try {
+            const response = await axios_1.default.postForm(url, { branch }, { headers });
+            if (response?.data)
+                result = response?.data.result;
+        }
+        catch (error) {
+            if (error.response?.status === 304) {
+                core.debug(`${projectName} not changed since last deployment.`);
+                core.debug(`Retrieving previous deployment info...`);
+                const response = await axios_1.default.get(`${url}?env=preview`, { headers });
+                if (response?.data && response?.data.result) {
+                    const branchDeployments = response?.data.result.filter((deployment) => deployment.deployment_trigger.metadata.branch === branch);
+                    result = branchDeployments[0];
+                    core.debug(`Found previous deployment with url: ${result.url}`);
+                }
+                else {
+                    core.debug(`Could not retrieve previous deployment.`);
+                    throw error;
                 }
             }
-            if (!result)
-                throw new Error('Missing Cloudflare deployment result');
-            return result;
-        };
-        let attempt = 0;
-        const maxAttempts = 3;
-        let response;
-        do {
-            try {
-                response = await sendRequest();
+            else {
+                throw error;
             }
-            catch (error) {
-                console.log(`Deploy attempt ${attempt + 1}, failed: `, error);
-                if (attempt >= maxAttempts)
-                    throw error;
-                await new Promise(resolve => setTimeout(resolve, 2 ** attempt * 1000));
-            }
-            attempt++;
-        } while (attempt < maxAttempts && !response);
-        return response;
+        }
+        return result;
     }
 }
 exports["default"] = Cloudflare;
@@ -33666,33 +33680,35 @@ const cloudflare_1 = __importDefault(__nccwpck_require__(4985));
 const comment_1 = __importStar(__nccwpck_require__(5345));
 async function run() {
     try {
-        console.log('Retrieving action config...');
+        core.debug('Retrieving action config...');
         const config = (0, config_1.default)();
         let deployCount = 0;
         const comment = new comment_1.default();
         const labels = config.github.pullRequest.labels;
+        core.debug(`PR Labels: ${JSON.stringify(labels)}`);
         const branch = config.github.pullRequest.head.ref;
-        for (const map of config.projectMap) {
-            if (!labels.some((l) => l.name === map.label))
+        core.info(`Deploying branch: ${branch}`);
+        for (let i = 0; i < config.projectMap.length; i++) {
+            const map = config.projectMap[i];
+            if (!labels.some(l => l.name === map.label)) {
+                core.debug(`Label ${map.label} not found. Skipping...`);
                 continue;
-            const cloudflare = new cloudflare_1.default(config.cloudflare.accountId, config.cloudflare.cloudflareApiToken);
-            console.log('Starting Cloudflare Deployment...');
-            console.log('- Project: ' + map.project);
-            console.log('- Branch: ' + branch);
-            const result = await cloudflare.deploy(map.project, branch);
-            if (!result) {
-                throw new Error(`Failed to deploy ${map.project} to Cloudflare Pages`);
             }
+            const cloudflare = new cloudflare_1.default(config.cloudflare.accountId, config.cloudflare.cloudflareApiToken);
+            const result = await cloudflare.deploy(map.project, branch);
+            if (!result)
+                throw new Error(`Failed to deploy ${map.project}`);
             deployCount += 1;
+            core.info(`Deployed ${map.name || map.project} to ${result.url}`);
             comment.appendLine({ name: map.name || map.project, url: result.url });
         }
         if (deployCount === 0) {
-            console.log('No projects deployed. Skipping...');
+            core.info('No projects deployed. Skipping...');
             return;
         }
         const commentBody = comment.addTimestamp().getBody();
         /** Creates or updates existing comment */
-        console.log('Searching for existing comment...');
+        core.debug('Searching for existing comment...');
         const githubClient = github.getOctokit(config.github.token);
         const comments = await githubClient.rest.issues.listComments({
             ...github.context.repo,
@@ -33706,7 +33722,7 @@ async function run() {
             }
         }
         if (commentId) {
-            console.log('Updating existing PR comment with ID ' + commentId + '...');
+            core.info('Updating existing PR comment with ID ' + commentId + '...');
             await githubClient.rest.issues.updateComment({
                 ...github.context.repo,
                 comment_id: commentId,
@@ -33714,7 +33730,7 @@ async function run() {
             });
         }
         else {
-            console.log('Creating new PR comment...');
+            core.info('Creating new PR comment...');
             await githubClient.rest.issues.createComment({
                 ...github.context.repo,
                 issue_number: config.github.pullRequest.number,

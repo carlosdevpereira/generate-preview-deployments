@@ -6,43 +6,47 @@ import Comment, { COMMENT_FOOTER } from './comment'
 
 export async function run(): Promise<void> {
   try {
-    console.log('Retrieving action config...')
+    core.debug('Retrieving action config...')
     const config = getConfig()
 
     let deployCount = 0
     const comment = new Comment()
 
-    const labels = config.github.pullRequest.labels
-    const branch = config.github.pullRequest.head.ref
+    const labels: Array<{ name: string }> = config.github.pullRequest.labels
+    core.debug(`PR Labels: ${JSON.stringify(labels)}`)
 
-    for (const map of config.projectMap) {
-      if (!labels.some((l: { name: string }) => l.name === map.label)) continue
+    const branch = config.github.pullRequest.head.ref
+    core.info(`Deploying branch: ${branch}`)
+
+    for (let i = 0; i < config.projectMap.length; i++) {
+      const map = config.projectMap[i]
+      if (!labels.some(l => l.name === map.label)) {
+        core.debug(`Label ${map.label} not found. Skipping...`)
+        continue
+      }
 
       const cloudflare = new CloudflareClient(
         config.cloudflare.accountId,
         config.cloudflare.cloudflareApiToken
       )
-      console.log('Starting Cloudflare Deployment...')
-      console.log('- Project: ' + map.project)
-      console.log('- Branch: ' + branch)
+
       const result = await cloudflare.deploy(map.project, branch)
-      if (!result) {
-        throw new Error(`Failed to deploy ${map.project} to Cloudflare Pages`)
-      }
+      if (!result) throw new Error(`Failed to deploy ${map.project}`)
 
       deployCount += 1
+      core.info(`Deployed ${map.name || map.project} to ${result.url}`)
       comment.appendLine({ name: map.name || map.project, url: result.url })
     }
 
     if (deployCount === 0) {
-      console.log('No projects deployed. Skipping...')
+      core.info('No projects deployed. Skipping...')
       return
     }
 
     const commentBody = comment.addTimestamp().getBody()
 
     /** Creates or updates existing comment */
-    console.log('Searching for existing comment...')
+    core.debug('Searching for existing comment...')
     const githubClient = github.getOctokit(config.github.token)
     const comments = await githubClient.rest.issues.listComments({
       ...github.context.repo,
@@ -58,14 +62,14 @@ export async function run(): Promise<void> {
     }
 
     if (commentId) {
-      console.log('Updating existing PR comment with ID ' + commentId + '...')
+      core.info('Updating existing PR comment with ID ' + commentId + '...')
       await githubClient.rest.issues.updateComment({
         ...github.context.repo,
         comment_id: commentId,
         body: commentBody
       })
     } else {
-      console.log('Creating new PR comment...')
+      core.info('Creating new PR comment...')
       await githubClient.rest.issues.createComment({
         ...github.context.repo,
         issue_number: config.github.pullRequest.number,

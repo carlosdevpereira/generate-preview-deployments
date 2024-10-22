@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import type { CloudflareResponse } from './types'
 import type { AxiosError } from 'axios'
 import axios from 'axios'
@@ -22,49 +23,39 @@ export default class Cloudflare {
    */
   async deploy(projectName: string, branch: string) {
     if (!projectName) throw new Error('Missing Cloudflare Pages project name')
+    core.info(`Starting deployment of ${projectName} from branch ${branch}`)
 
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountID}/pages/projects/${projectName}/deployments`
     const headers = {
       Authorization: `Bearer ${this.apiToken}`
     }
 
-    const sendRequest = async () => {
-      let result
-      try {
-        const response = await axios.postForm(url, { branch }, { headers })
-        if (response?.data) result = response?.data.result
-      } catch (error) {
-        console.log('error: ', error)
-        if ((error as AxiosError).response?.status === 304) {
-          const response = await axios.get(`${url}?env=preview`, { headers })
-          if (response?.data && response?.data.result) {
-            const branchDeployments = response?.data.result.filter(
-              (deployment: CloudflareResponse['result']) =>
-                deployment.deployment_trigger.metadata.branch === branch
-            )
-            result = branchDeployments[0]
-          }
-        }
-      }
+    let result
+    try {
+      const response = await axios.postForm(url, { branch }, { headers })
+      if (response?.data) result = response?.data.result
+    } catch (error) {
+      if ((error as AxiosError).response?.status === 304) {
+        core.debug(`${projectName} not changed since last deployment.`)
+        core.debug(`Retrieving previous deployment info...`)
 
-      if (!result) throw new Error('Missing Cloudflare deployment result')
-      return result
+        const response = await axios.get(`${url}?env=preview`, { headers })
+        if (response?.data && response?.data.result) {
+          const branchDeployments = response?.data.result.filter(
+            (deployment: CloudflareResponse['result']) =>
+              deployment.deployment_trigger.metadata.branch === branch
+          )
+          result = branchDeployments[0]
+          core.debug(`Found previous deployment with url: ${result.url}`)
+        } else {
+          core.debug(`Could not retrieve previous deployment.`)
+          throw error
+        }
+      } else {
+        throw error
+      }
     }
 
-    let attempt = 0
-    const maxAttempts = 3
-    let response: CloudflareResponse['result'] | undefined
-    do {
-      try {
-        response = await sendRequest()
-      } catch (error) {
-        console.log(`Deploy attempt ${attempt + 1}, failed: `, error)
-        if (attempt >= maxAttempts) throw error
-        await new Promise(resolve => setTimeout(resolve, 2 ** attempt * 1000))
-      }
-      attempt++
-    } while (attempt < maxAttempts && !response)
-
-    return response
+    return result
   }
 }
