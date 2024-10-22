@@ -14,9 +14,6 @@ importers:
       '@actions/github':
         specifier: ^6.0.0
         version: 6.0.0
-      '@actions/http-client':
-        specifier: ^2.2.3
-        version: 2.2.3
       axios:
         specifier: ^1.7.7
         version: 1.7.7

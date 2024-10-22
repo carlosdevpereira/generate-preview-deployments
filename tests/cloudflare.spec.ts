@@ -1,24 +1,6 @@
-const mockedClient = {
-  post: jest.fn(async () => {
-    return {
-      readBody: jest.fn(async () => {
-        return JSON.stringify({
-          result: cloudflareDeploymentResponseFixture,
-          success: true,
-          errors: [],
-          messages: []
-        })
-      })
-    }
-  })
-}
-
-jest.mock('@actions/http-client', () => ({
-  HttpClient: jest.fn(() => mockedClient)
-}))
-
 import CloudflareClient from '@/cloudflare'
 import cloudflareDeploymentResponseFixture from '@tests/__fixtures__/cloudflare-deployment-response.json'
+import axios from 'axios'
 
 describe('src/cloudflare.ts', () => {
   it('exports a valid Cloudflare client class', () => {
@@ -37,6 +19,14 @@ describe('src/cloudflare.ts', () => {
         return '2020-01-01T00:00:00.000Z'
       })
 
+      jest.spyOn(axios, 'postForm').mockImplementationOnce(async () => {
+        return {
+          data: {
+            result: cloudflareDeploymentResponseFixture
+          }
+        }
+      })
+
       const client = new CloudflareClient('account-id', 'api-token')
       const response = await client.deploy('project-name', 'branch')
 
@@ -49,8 +39,15 @@ describe('src/cloudflare.ts', () => {
       })
 
       jest
-        .spyOn(mockedClient, 'post')
+        .spyOn(axios, 'postForm')
         .mockRejectedValueOnce(new Error('Request failed'))
+        .mockImplementationOnce(async () => {
+          return {
+            data: {
+              result: cloudflareDeploymentResponseFixture
+            }
+          }
+        })
 
       const client = new CloudflareClient('account-id', 'api-token')
       const response = await client.deploy('project-name', 'branch')

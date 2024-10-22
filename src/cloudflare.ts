@@ -31,12 +31,19 @@ export default class Cloudflare {
     const sendRequest = async () => {
       let result
       try {
-        const { data } = await axios.postForm(url, { branch }, { headers })
-        if (data) result = data.result
+        const response = await axios.postForm(url, { branch }, { headers })
+        if (response?.data) result = response?.data.result
       } catch (error) {
+        console.log('error: ', error)
         if ((error as AxiosError).response?.status === 304) {
-          const { data } = await axios.get(url, { headers })
-          if (data && data.result) result = data.result[0]
+          const response = await axios.get(`${url}?env=preview`, { headers })
+          if (response?.data && response?.data.result) {
+            const branchDeployments = response?.data.result.filter(
+              (deployment: CloudflareResponse['result']) =>
+                deployment.deployment_trigger.metadata.branch === branch
+            )
+            result = branchDeployments[0]
+          }
         }
       }
 
