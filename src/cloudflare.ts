@@ -36,12 +36,14 @@ export default class Cloudflare {
           { branch },
           { headers }
         )
-
+        console.log('post result: ', createDeploymentResponse.data)
         if (createDeploymentResponse) {
           result = createDeploymentResponse.data.result
         }
       } catch (error) {
+        console.log('error:', error)
         const getDeploymentResponse = await axios.get(url, { headers })
+        console.log('get deployment response: ', getDeploymentResponse.data)
         if (getDeploymentResponse && getDeploymentResponse.data.results) {
           result = getDeploymentResponse.data.results[0]
         }
